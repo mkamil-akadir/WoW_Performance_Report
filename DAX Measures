@@ -1,0 +1,62 @@
+This project includes several DAX measures to analyze weekly, monthly, and cumulative utilization metrics. Below are the key measures used for calculating current utilization, week-over-week deltas, previous period averages, and comparisons against target values.
+
+You have to reapply the similar measures for other metrics like staffing%, AHT, Quality to visualize this in PBI
+
+
+Calendar = 
+ADDCOLUMNS(
+    CALENDAR("2023-01-01", "2024-12-31"), // Set date range as needed
+    "Year", YEAR([Date]),
+    "Month", MONTH([Date]),
+    "Week Ending", [Date] - WEEKDAY([Date], 2) + 5, // Week ending on Friday
+    "Week Number", WEEKNUM([Date], 2) // Assuming a week starts on Saturday
+)
+
+
+Utilization
+
+Current Utilization = 
+DIVIDE(
+    SUM('Data'[Actual Utilization]), 
+    SUM('Data'[Total Hours]), 
+    0
+)
+
+YTD Utilization = 
+TOTALYTD([Current Utilization], 'Calendar'[Date])
+
+
+Previous Week Utilization = 
+CALCULATE(
+    [Current Utilization],
+    DATEADD('Calendar'[Date], -7, DAY)
+)
+
+
+Delta WoW = 
+[Current Utilization] - [Previous Week Utilization]
+
+
+Previous 6 Weeks Utilization = 
+CALCULATE(
+    [Current Utilization],
+    DATESINPERIOD('Calendar'[Date], MAX('Calendar'[Date]), -6, WEEK)
+)
+
+Delta 6 Weeks = 
+[Current Utilization] - ([Previous 6 Weeks Utilization] / 6)
+
+
+Previous 6 Months Utilization = 
+CALCULATE(
+    [Current Utilization],
+    DATESINPERIOD('Calendar'[Date], MAX('Calendar'[Date]), -6, MONTH)
+)
+
+Delta 6 Months = 
+[Current Utilization] - ([Previous 6 Months Utilization] / 6)
+
+Delta vs Target = 
+[Current Utilization] - [Target Utilization]
+
+
